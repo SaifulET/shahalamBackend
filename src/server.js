@@ -7,6 +7,11 @@ import cookieParser from "cookie-parser";
 
 import mongoose from "mongoose";
 import Authrouter from "./UserAuth/UserAuth.route.js";
+import FloorRouter from "./Floor/floor.route.js";
+import ProjectRouter from "./Project/Project.route.js";
+import modelRouter from "./Model/model.route.js";
+import FolderRouter from "./Folder/folder.route.js";
+import RecentRouter from "./Recent/recent.route.js";
 
 
 
@@ -44,6 +49,11 @@ app.get("/", (req, res) => {
 
 });
 app.use("/auth",Authrouter);
+app.use("/floors",FloorRouter);
+app.use("/projects",ProjectRouter);
+app.use("/models",modelRouter);
+app.use("/folders",FolderRouter);
+app.use("/recents",RecentRouter);
 
 // MongoDB Connection
 mongoose
