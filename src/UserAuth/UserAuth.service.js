@@ -121,3 +121,11 @@ export const setNewPassword = async (email,  newPassword) => {
   user.password = hashedPassword;
   await user.save();
 };
+
+
+
+
+
+export const getUserByIdService = async (userId) => {
+  return await User.findById(userId);
+};

@@ -5,7 +5,7 @@ import {
   logoutUser,
   generateOTP,
   verifyOTP,
-  setNewPassword,
+  setNewPassword,getUserByIdService
 } from "./UserAuth.service.js";
 
 /* SIGNUP */
@@ -118,5 +118,35 @@ export const setNewPasswordController = async (req, res) => {
     res.json({ message: "Password updated successfully" });
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+};
+
+
+
+
+// ✅ Get User Info
+export const getUserById = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await getUserByIdService(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: user
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };

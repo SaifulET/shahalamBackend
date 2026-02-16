@@ -23,26 +23,47 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       unique: true,
-      sparse: true, // allow multiple null values
+      sparse: true,
     },
 
     /* AUTH */
     password: {
       type: String,
       required: true,
-      select: false, // 🔐 never expose
+      select: false,
+    },
+
+    refreshToken: {
+      type: String,
+      select: false,
+    },
+
+    otp: {
+      type: String,
+      select: false,
+    },
+
+    otpExpiry: {
+      type: Date,
+      select: false,
     },
 
     /* PROFILE */
     profileImage: {
-      type: String, // image URL (S3, Cloudinary, etc.)
+      type: String,
       default: "",
     },
 
-    location: {
+    tagline: {
       type: String,
       trim: true,
       maxlength: 120,
+    },
+
+    description: {
+      type: String,
+      maxlength: 500,
+      trim: true,
     },
 
     website: {
@@ -55,10 +76,29 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
-    description: {
+    /* ADDRESS INFO */
+    country: {
       type: String,
-      maxlength: 500,
       trim: true,
+      maxlength: 100,
+    },
+
+    city: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+
+    postalCode: {
+      type: String,
+      trim: true,
+      maxlength: 20,
+    },
+
+    location: {
+      type: String,
+      trim: true,
+      maxlength: 120,
     },
 
     /* SYSTEM */
@@ -68,13 +108,17 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
-    refreshToken: {
+    status: {
       type: String,
-      select: false,
+      enum: ["active", "inactive", "blocked"],
+      default: "active",
+      index: true,
     },
-    otp: { type: String, select: false },
-    
-    otpExpiry: { type: Date, select: false },
+
+    joinedDate: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     timestamps: true,

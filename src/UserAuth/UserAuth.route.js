@@ -7,6 +7,7 @@ import {
   forgotPassword,
   verifyOtpController,
   setNewPasswordController,
+  getUserById,
 } from "./UserAuth.controller.js";
 
 const Authrouter = express.Router();
@@ -18,4 +19,8 @@ Authrouter.post("/logout", logout);
 Authrouter.post("/forgot-password", forgotPassword);
 Authrouter.post("/verify-otp", verifyOtpController);
 Authrouter.post("/set-new-password", setNewPasswordController);
+
+
+
+Authrouter.get("/:userId", getUserById);
 export default Authrouter;
