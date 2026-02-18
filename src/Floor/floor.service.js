@@ -5,7 +5,14 @@ import Floor from "./floor.model.js";
    CREATE FLOOR
 ========================================= */
 export const createFloorService = async (data) => {
+  try {
+     console.log("Creating floor with data:", data);
+     
   return await Floor.create(data);
+  } catch (error) {
+    console.error("Error creating floor:", error);
+  }
+ 
 };
 
 /* =========================================
