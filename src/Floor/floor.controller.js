@@ -6,15 +6,26 @@ import { addUnitService, createFloorService, deleteFloorService, deleteUnitServi
 ========================================= */
 export const createFloor = async (req, res) => {
   try {
-    console.log("Request Body:");
-    const { projectId, name, unitName, units } = req.body;
-
-    const floor = await createFloorService({
+    const { projectId, name,  units } = req.body;
+console.log("Creating floorddd with data:", { projectId, name, units });
+let floor;
+if(units && Array.isArray(units) && units.length > 0){
+     floor = await createFloorService({
       projectId,
       name,
-      unitName,
-      units,
+      units: units.map((unitName) => ({
+      name: unitName,
+      status: "available",
+    })),
     });
+}
+else{
+   floor = await createFloorService({
+      projectId,
+      name
+    });
+}
+  
 
     res.status(201).json({
       success: true,

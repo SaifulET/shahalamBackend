@@ -3,7 +3,7 @@ import { createProjectService, getProjectsByUserService } from "./project.servic
 export const createProject = async (req, res) => {
   try {
     const { userId, name, location, address, image } = req.body;
-
+console.log("Received project creation request:", req.body);
     const project = await createProjectService({
       userId,
       name,
@@ -11,6 +11,7 @@ export const createProject = async (req, res) => {
       address,
       image,
     });
+
 
     res.status(201).json({
       success: true,
