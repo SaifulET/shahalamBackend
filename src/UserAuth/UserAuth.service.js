@@ -20,8 +20,8 @@ export const createUser = async (data) => {
 };
 
 /* LOGIN USER */
-export const loginUser = async (email, password) => {
-  const user = await User.findOne({ email }).select("+password");
+export const loginUser = async (email, password,role) => {
+  const user = await User.findOne({ email, role }).select("+password");
   if (!user) throw new Error("INVALID_CREDENTIALS");
 
   const isValid = await bcrypt.compare(password, user.password);
@@ -128,4 +128,25 @@ export const setNewPassword = async (email,  newPassword) => {
 
 export const getUserByIdService = async (userId) => {
   return await User.findById(userId);
+};
+
+
+
+export const updateProfile = async (userId, profileData) => {
+  try {
+    // Find user by ID and update
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: profileData },
+      { new: true, runValidators: true } // return updated doc
+    );
+
+    if (!updatedUser) {
+      throw new Error('User not found');
+    }
+
+    return updatedUser;
+  } catch (error) {
+    throw error;
+  }
 };

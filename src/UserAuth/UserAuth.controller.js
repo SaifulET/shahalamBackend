@@ -5,7 +5,8 @@ import {
   logoutUser,
   generateOTP,
   verifyOTP,
-  setNewPassword,getUserByIdService
+  setNewPassword,getUserByIdService,
+  updateProfile
 } from "./UserAuth.service.js";
 
 /* SIGNUP */
@@ -24,9 +25,11 @@ export const signup = async (req, res) => {
 /* LOGIN */
 export const login = async (req, res) => {
   try {
+    const role = req.body.role || "user"; 
     const { user, accessToken, refreshToken } = await loginUser(
       req.body.email,
-      req.body.password
+      req.body.password,
+      role
     );
 
     res.cookie("refreshToken", refreshToken, {
@@ -147,6 +150,27 @@ export const getUserById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message
+    });
+  }
+};
+
+
+
+export const editProfile = async (req, res) => {
+  const userId = req.params.userId; // assuming you have auth middleware
+  const profileData = req.body;
+console.log("Received profile update:", profileData);
+  try {
+    const updatedUser = await updateProfile(userId, profileData);
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: updatedUser,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
     });
   }
 };
