@@ -8,6 +8,7 @@ import {
   verifyOtpController,
   setNewPasswordController,
   getUserById,
+  editProfile,
 } from "./UserAuth.controller.js";
 
 const Authrouter = express.Router();
@@ -23,4 +24,6 @@ Authrouter.post("/set-new-password", setNewPasswordController);
 
 
 Authrouter.get("/:userId", getUserById);
+Authrouter.patch("/:userId", editProfile);
+
 export default Authrouter;
