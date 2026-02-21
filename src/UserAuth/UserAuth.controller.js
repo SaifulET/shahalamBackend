@@ -7,7 +7,8 @@ import {
   verifyOTP,
   setNewPassword,getUserByIdService,
   updateProfile,
-  loginCompany
+  loginCompany,
+  changePassword
 } from "./UserAuth.service.js";
 
 /* SIGNUP */
@@ -125,7 +126,7 @@ export const forgotPassword = async (req, res) => {
 
     // TODO: send OTP via email/SMS here
 
-    res.json({ message: "OTP sent to your email/phone", otp }); // remove otp in production
+    res.json({ message: "OTP sent to your email/phone" }); // remove otp in production
   } catch (err) {
     console.log("keke",err)
     res.status(400).json({error:"failed", message: err.message });
@@ -148,12 +149,16 @@ export const verifyOtpController = async (req, res) => {
 export const setNewPasswordController = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
+   
     await setNewPassword(email,  newPassword);
     res.json({ message: "Password updated successfully" });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
+
+
+
 
 
 
@@ -203,5 +208,25 @@ console.log("Received profile update:", profileData);
       success: false,
       message: error.message,
     });
+  }
+};
+
+
+
+
+
+export const changePasswordController = async (req, res) => {
+  try {
+    const { userId, currentPassword, newPassword } = req.body;
+
+    if (!userId || !currentPassword || !newPassword) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    await changePassword(userId, currentPassword, newPassword);
+
+    res.status(200).json({ message: "Password updated successfully." });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 };

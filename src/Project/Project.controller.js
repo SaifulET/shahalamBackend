@@ -1,4 +1,4 @@
-import { createProjectService, deleteProjectByIdWithDetailsService, getProjectByIdWithDetailsService, getProjectsByUserService } from "./project.service.js";
+import { createProjectService, deleteProjectByIdWithDetailsService, getDashboardService, getProjectByIdWithDetailsService, getProjectsByUserService } from "./project.service.js";
 
 export const createProject = async (req, res) => {
   try {
@@ -32,8 +32,8 @@ export const getMyProjects = async (req, res) => {
   try {
     const userId = req.params.userId;
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) ;
+    const limit = parseInt(req.query.limit);
 
     const result = await getProjectsByUserService(
       userId,
@@ -105,6 +105,27 @@ export const deleteProjectByIdWithDetails = async (req, res) => {
       message:
         "Project + related models + floors removed & folder references cleaned",
     });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+
+export const getCompanyDashboard = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+
+    const data = await getDashboardService(companyId);
+
+    res.status(200).json({
+      success: true,
+      data,
+    });
+
   } catch (error) {
     res.status(500).json({
       success: false,

@@ -10,6 +10,7 @@ import {
   getUserById,
   editProfile,
   loginCompanyController,
+  changePasswordController,
 } from "./UserAuth.controller.js";
 
 const Authrouter = express.Router();
@@ -23,6 +24,9 @@ Authrouter.post("/logout", logout);
 Authrouter.post("/forgot-password", forgotPassword);
 Authrouter.post("/verify-otp", verifyOtpController);
 Authrouter.post("/set-new-password", setNewPasswordController);
+
+
+Authrouter.patch("/change-password", changePasswordController);
 
 
 

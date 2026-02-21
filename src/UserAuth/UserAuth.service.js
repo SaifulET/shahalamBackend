@@ -227,3 +227,27 @@ export const updateProfile = async (userId, profileData) => {
     throw error;
   }
 };
+
+
+
+
+
+export const changePassword = async (userId, currentPassword, newPassword) => {
+  // 1. Find user and include password
+  const user = await User.findById(userId).select("+password");
+  if (!user) throw new Error("User not found");
+
+  // 2. Check current password
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) throw new Error("Current password is incorrect");
+
+  // 3. Hash new password
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+  // 4. Update password
+  user.password = hashedPassword;
+  await user.save();
+
+  return true;
+};

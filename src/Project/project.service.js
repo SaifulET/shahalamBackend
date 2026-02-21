@@ -3,6 +3,7 @@ import Model from "../Model/model.model.js";
 import Project from "./Project.model.js";
 import Folder from "../Folder/folder.model.js";
 import mongoose from "mongoose";
+import Employee from "../Employee/Employee.model.js";
 export const createProjectService = async (data) => {
   return await Project.create(data);
 };
@@ -81,4 +82,53 @@ export const deleteProjectByIdWithDetailsService = async (projectId) => {
   await Project.findByIdAndDelete(projectId);
 
   return true;
+};
+
+
+
+
+export const getDashboardService = async (companyId) => {
+
+  const companyObjectId = new mongoose.Types.ObjectId(companyId);
+
+  // 1️⃣ Get last 3 projects with unit count
+  const recentProjects = await Project.aggregate([
+    {
+      $match: { userId: companyObjectId },
+    },
+    { $sort: { createdAt: -1 } },
+    { $limit: 3 },
+    {
+      $lookup: {
+        from: "units",
+        localField: "_id",
+        foreignField: "project",
+        as: "units",
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        name: 1,
+        unitCount: { $size: "$units" },
+      },
+    },
+  ]);
+
+  // 2️⃣ Total active employees
+  const totalActiveEmployees = await Employee.countDocuments({
+    company: companyId,
+    status: "active", // assuming you store status
+  });
+
+  // 3️⃣ Total projects
+  const totalProjects = await Project.countDocuments({
+    userId: companyObjectId,
+  });
+
+  return {
+    totalActiveEmployees,
+    totalProjects,
+    recentProjects,
+  };
 };
