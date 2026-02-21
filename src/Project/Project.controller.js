@@ -1,4 +1,4 @@
-import { createProjectService, getProjectsByUserService } from "./project.service.js";
+import { createProjectService, deleteProjectByIdWithDetailsService, getProjectByIdWithDetailsService, getProjectsByUserService } from "./project.service.js";
 
 export const createProject = async (req, res) => {
   try {
@@ -46,6 +46,65 @@ export const getMyProjects = async (req, res) => {
       ...result,
     });
 
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+
+
+
+
+
+// GET project + models + floors + folders
+export const getProjectByIdWithDetails = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+
+    const data = await getProjectByIdWithDetailsService(projectId);
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// DELETE project + models + floors + folders cleanup
+export const deleteProjectByIdWithDetails = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+
+    const deleted = await deleteProjectByIdWithDetailsService(projectId);
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message:
+        "Project + related models + floors removed & folder references cleaned",
+    });
   } catch (error) {
     res.status(500).json({
       success: false,

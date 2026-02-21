@@ -9,12 +9,15 @@ import {
   setNewPasswordController,
   getUserById,
   editProfile,
+  loginCompanyController,
 } from "./UserAuth.controller.js";
 
 const Authrouter = express.Router();
 
 Authrouter.post("/signup", signup);
-Authrouter.post("/login", login);
+  Authrouter.post("/login", login);
+  Authrouter.post("/login-company", loginCompanyController);
+  
 Authrouter.post("/refresh", refresh);
 Authrouter.post("/logout", logout);
 Authrouter.post("/forgot-password", forgotPassword);

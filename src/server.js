@@ -12,6 +12,7 @@ import ProjectRouter from "./Project/Project.route.js";
 import modelRouter from "./Model/model.route.js";
 import FolderRouter from "./Folder/folder.route.js";
 import RecentRouter from "./Recent/recent.route.js";
+import EmployeeRouter from "./Employee/Employee.route.js";
 
 
 
@@ -27,7 +28,7 @@ const allowedOrigins = [
   "*",
   "http://localhost:3000",
 
-  "http://localhost:5174",
+  "http://localhost:5173",
   
 ];
 
@@ -57,6 +58,7 @@ app.use("/projects",ProjectRouter);
 app.use("/models",modelRouter);
 app.use("/folders",FolderRouter);
 app.use("/recents",RecentRouter);
+app.use("/employees",EmployeeRouter);
 
 // MongoDB Connection
 mongoose
