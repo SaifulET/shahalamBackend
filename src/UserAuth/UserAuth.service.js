@@ -5,6 +5,7 @@ import crypto from "crypto";
 import User from "./UserAuth.model.js";
 import { createAccessToken, createRefreshToken } from "../Utils/token.js";
 import { sendEmail } from "../Utils/mailer.js";
+import EmployeeModel from "../Employee/Employee.model.js";
 
 /* CREATE USER */
 export const createUser = async (data) => {
@@ -20,7 +21,7 @@ export const createUser = async (data) => {
 };
 
 /* LOGIN USER */
-export const loginUser = async (email, password,role) => {
+export const loginCompany = async (email, password,role) => {
   const user = await User.findOne({ email, role }).select("+password");
   if (!user) throw new Error("INVALID_CREDENTIALS");
 
@@ -35,6 +36,82 @@ export const loginUser = async (email, password,role) => {
 
   return { user, accessToken, refreshToken };
 };
+
+
+export const loginUser = async (email, password,role) => {
+  email = email.toLowerCase();
+
+  let account;
+  let companyData;
+
+  /* =========================
+     1️⃣ TRY COMPANY LOGIN
+  ========================== */
+  const company = await User.findOne({ email }).select("+password");
+
+  if (company) {
+    const isValid = await bcrypt.compare(password, company.password);
+    if (!isValid) throw new Error("INVALID_CREDENTIALS");
+
+    if (company.status !== "active")
+      throw new Error("ACCOUNT_INACTIVE");
+
+    account = company;
+    companyData = {
+      id: company._id,
+      name: company.name,
+      email: company.email,
+    };
+  }
+
+  /* =========================
+     2️⃣ TRY EMPLOYEE LOGIN
+  ========================== */
+  if (!account) {
+    const employee = await EmployeeModel.findOne({ email })
+      .select("+password")
+      .populate("company");
+
+    if (!employee) throw new Error("INVALID_CREDENTIALS");
+
+    const isValid = await bcrypt.compare(password, employee.password);
+    if (!isValid) throw new Error("INVALID_CREDENTIALS");
+
+    if (employee.status !== "active")
+      throw new Error("ACCOUNT_BLOCKED");
+
+    if (employee.company.status !== "active")
+      throw new Error("COMPANY_INACTIVE");
+
+    account = employee;
+
+    companyData = {
+      id: employee.company._id,
+      name: employee.company.name,
+      email: employee.company.email,
+    };
+  }
+
+  /* =========================
+     TOKEN
+  ========================== */
+  const payload = {
+    id: account._id,
+    companyId: companyData.id,
+  };
+
+  const accessToken = createAccessToken(payload);
+  const refreshToken = createRefreshToken(payload);
+
+  return {
+    user: companyData,
+    accessToken,
+    refreshToken,
+  };
+};
+
+
+
 
 /* REFRESH TOKEN */
 export const refreshAccessToken = async (refreshToken) => {

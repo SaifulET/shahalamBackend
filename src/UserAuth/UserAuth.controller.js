@@ -6,7 +6,8 @@ import {
   generateOTP,
   verifyOTP,
   setNewPassword,getUserByIdService,
-  updateProfile
+  updateProfile,
+  loginCompany
 } from "./UserAuth.service.js";
 
 /* SIGNUP */
@@ -27,6 +28,36 @@ export const login = async (req, res) => {
   try {
     const role = req.body.role || "user"; 
     const { user, accessToken, refreshToken } = await loginUser(
+      req.body.email,
+      req.body.password,
+      role
+    );
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({
+      accessToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch {
+    res.sendStatus(401);
+  }
+};
+
+export const loginCompanyController = async (req, res) => {
+  try {
+    const role = req.body.role || "user"; 
+    const { user, accessToken, refreshToken } = await loginCompany(
       req.body.email,
       req.body.password,
       role
