@@ -8,13 +8,15 @@ import {
   setNewPassword,getUserByIdService,
   updateProfile,
   loginCompany,
-  changePassword
+  changePassword,
+  loginSuperAdmin
 } from "./UserAuth.service.js";
 
 /* SIGNUP */
 export const signup = async (req, res) => {
   try {
     const user = await createUser(req.body);
+    console.log("User created:", user);
     res.status(201).json({
       message: "User created",
       user: { id: user._id, email: user.email },
@@ -54,6 +56,41 @@ export const login = async (req, res) => {
     res.sendStatus(401);
   }
 };
+
+export const loginAdmin = async (req, res) => {
+  try {
+    const role = req.body.role || "superadmin"; 
+    const { user, accessToken, refreshToken } = await loginSuperAdmin(
+      req.body.email,
+      req.body.password,
+      role
+    );
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({
+      accessToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch {
+    res.sendStatus(401);
+  }
+};
+
+
+
+
+
 
 export const loginCompanyController = async (req, res) => {
   try {

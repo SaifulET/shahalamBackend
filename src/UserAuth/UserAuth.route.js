@@ -11,12 +11,15 @@ import {
   editProfile,
   loginCompanyController,
   changePasswordController,
+  loginAdmin,
 } from "./UserAuth.controller.js";
 
 const Authrouter = express.Router();
 
 Authrouter.post("/signup", signup);
   Authrouter.post("/login", login);
+  Authrouter.post("/superadmin-login", loginAdmin);
+
   Authrouter.post("/login-company", loginCompanyController);
   
 Authrouter.post("/refresh", refresh);

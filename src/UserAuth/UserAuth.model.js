@@ -13,10 +13,9 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
       trim: true,
-      index: true,
+      index: true, // removed unique: true
     },
 
     phone: {
@@ -31,6 +30,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       select: false,
+      minlength: 6,
     },
 
     refreshToken: {
@@ -106,6 +106,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["user", "admin", "superadmin"],
       default: "user",
+      index: true,
     },
 
     status: {
@@ -125,5 +126,9 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+/* COMPOUND UNIQUE INDEX */
+userSchema.index({ email: 1, role: 1 }, { unique: true });
+
 const User = mongoose.model("User", userSchema);
+
 export default User;

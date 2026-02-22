@@ -9,7 +9,8 @@ import EmployeeModel from "../Employee/Employee.model.js";
 
 /* CREATE USER */
 export const createUser = async (data) => {
-  const exists = await User.findOne({ email: data.email });
+  const exists = await User.findOne({ email: data.email,role: data.role });
+  console.log(exists);
   if (exists) throw new Error("EMAIL_EXISTS");
 
   const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -18,6 +19,7 @@ export const createUser = async (data) => {
     ...data,
     password: hashedPassword,
   });
+  
 };
 
 /* LOGIN USER */
@@ -48,6 +50,86 @@ export const loginUser = async (email, password,role) => {
      1️⃣ TRY COMPANY LOGIN
   ========================== */
   const company = await User.findOne({ email }).select("+password");
+
+  if (company) {
+    const isValid = await bcrypt.compare(password, company.password);
+    if (!isValid) throw new Error("INVALID_CREDENTIALS");
+
+    if (company.status !== "active")
+      throw new Error("ACCOUNT_INACTIVE");
+
+    account = company;
+    companyData = {
+      id: company._id,
+      name: company.name,
+      email: company.email,
+    };
+  }
+
+  /* =========================
+     2️⃣ TRY EMPLOYEE LOGIN
+  ========================== */
+  if (!account) {
+    const employee = await EmployeeModel.findOne({ email })
+      .select("+password")
+      .populate("company");
+
+    if (!employee) throw new Error("INVALID_CREDENTIALS");
+
+    const isValid = await bcrypt.compare(password, employee.password);
+    if (!isValid) throw new Error("INVALID_CREDENTIALS");
+
+    if (employee.status !== "active")
+      throw new Error("ACCOUNT_BLOCKED");
+
+    if (employee.company.status !== "active")
+      throw new Error("COMPANY_INACTIVE");
+
+    account = employee;
+
+    companyData = {
+      id: employee.company._id,
+      name: employee.company.name,
+      email: employee.company.email,
+    };
+  }
+
+  /* =========================
+     TOKEN
+  ========================== */
+  const payload = {
+    id: account._id,
+    companyId: companyData.id,
+  };
+
+  const accessToken = createAccessToken(payload);
+  const refreshToken = createRefreshToken(payload);
+
+  return {
+    user: companyData,
+    accessToken,
+    refreshToken,
+  };
+};
+
+
+
+export const loginSuperAdmin = async (email, password,role) => {
+  email = email.toLowerCase();
+
+  let account;
+  let companyData;
+
+  /* =========================
+     1️⃣ TRY COMPANY LOGIN
+  ========================== */
+if (role !== "superadmin") {
+    throw new Error("UNAUTHORIZED");
+}
+
+
+
+  const company = await User.findOne({ email ,role: "superadmin"}).select("+password");
 
   if (company) {
     const isValid = await bcrypt.compare(password, company.password);
