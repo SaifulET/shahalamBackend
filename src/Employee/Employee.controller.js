@@ -12,10 +12,13 @@ import {
 ============================== */
 export const createEmployee = async (req, res) => {
   try {
-    console.log("Creating employee with data:", req.body); // Debug log
+    const data = req.body;
+    if (req.file) {
+      data.profileImage = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${req.file.key}`;
+    }
     const employee = await createEmployeeService(
-      req.body.userId,
-      req.body
+      data.userId,
+      data
     );
 
     res.status(201).json({
@@ -36,8 +39,7 @@ export const createEmployee = async (req, res) => {
 ============================== */
 export const updateEmployee = async (req, res) => {
   try {
-    console.log("Updating employee with ID:", req.params.employeeId); // Debug log
-    console.log("Update data:", req.body); // Debug log
+   
     const employee = await updateEmployeeService(
       req.params.employeeId,
       req.body

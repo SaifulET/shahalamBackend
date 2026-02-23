@@ -5,8 +5,7 @@ import EmployeeModel from "./Employee.model.js";
    CREATE EMPLOYEE
 ============================== */
 export const createEmployeeService = async (companyId, data) => {
-  const { name, email, password, phone } = data;
-
+  const { name, email, password, phone ,profileImage} = data;
   const existing = await EmployeeModel.findOne({
     company: companyId,
     email: email.toLowerCase(),
@@ -23,7 +22,7 @@ export const createEmployeeService = async (companyId, data) => {
     name,
     email,
     password: hashedPassword,
-    phone,
+    phone,profileImage
   });
 
   return employee;

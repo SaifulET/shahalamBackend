@@ -15,8 +15,12 @@ import {
 /* SIGNUP */
 export const signup = async (req, res) => {
   try {
-    const user = await createUser(req.body);
-    console.log("User created:", user);
+    const data= req.body;
+     if(req.file){
+      data.image=data.image = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${req.file.key}`;
+    }
+    const user = await createUser(data);
+    
     res.status(201).json({
       message: "User created",
       user: { id: user._id, email: user.email },
@@ -29,6 +33,7 @@ export const signup = async (req, res) => {
 /* LOGIN */
 export const login = async (req, res) => {
   try {
+    console.log("Login attempt for email:", req.body.email); 
     const role = req.body.role || "user"; 
     const { user, accessToken, refreshToken } = await loginUser(
       req.body.email,
@@ -42,11 +47,11 @@ export const login = async (req, res) => {
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-
+console.log("User logged inssssssss:", user);
     res.json({
       accessToken,
       user: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -115,6 +120,7 @@ export const loginCompanyController = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        profileImage: user.profileImage,
       },
     });
   } catch {
@@ -128,6 +134,7 @@ export const loginCompanyController = async (req, res) => {
 /* REFRESH */
 export const refresh = async (req, res) => {
   try {
+    console.log("Received refresh token:", req.cookies.refreshToken);
     const { user, accessToken } = await refreshAccessToken(
       req.cookies.refreshToken
     );
@@ -232,7 +239,10 @@ export const getUserById = async (req, res) => {
 export const editProfile = async (req, res) => {
   const userId = req.params.userId; // assuming you have auth middleware
   const profileData = req.body;
-console.log("Received profile update:", profileData);
+  console.log("Received profile update request for userId:", userId);
+    if(req.file){ 
+      profileData.profileImage = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${req.file.key}`;
+    }
   try {
     const updatedUser = await updateProfile(userId, profileData);
     res.status(200).json({

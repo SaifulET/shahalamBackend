@@ -7,13 +7,14 @@ import {
   deleteEmployee,
   getAllBlockedEmployeesByCompany,
 } from "./Employee.controller.js";
+import { SingleuploadMiddleware } from "../Middleware/aws.middleware.js";
 
 
 const EmployeeRouter = express.Router();
 
 /* Company must be logged in */
 
-EmployeeRouter.post("/",  createEmployee);
+EmployeeRouter.post("/",SingleuploadMiddleware,  createEmployee);
 
 EmployeeRouter.get("/allemployee/:id",getAllEmployeesByCompany);
 

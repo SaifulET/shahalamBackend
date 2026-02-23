@@ -35,7 +35,6 @@ export const loginCompany = async (email, password,role) => {
 
   user.refreshToken = refreshToken;
   await user.save();
-
   return { user, accessToken, refreshToken };
 };
 
@@ -104,9 +103,17 @@ export const loginUser = async (email, password,role) => {
 
   const accessToken = createAccessToken(payload);
   const refreshToken = createRefreshToken(payload);
+  const jsonUserid = companyData.id.toString();
+  console.log("Logged in user:", companyData, jsonUserid); // Debug log
+const jsonUser = {
+  id: jsonUserid,
+  name: companyData.name, 
+  email: companyData.email,
+};
+
 
   return {
-    user: companyData,
+    user: jsonUser,
     accessToken,
     refreshToken,
   };
@@ -293,7 +300,7 @@ export const getUserByIdService = async (userId) => {
 
 export const updateProfile = async (userId, profileData) => {
   try {
-    // Find user by ID and update
+   
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $set: profileData },

@@ -13,6 +13,7 @@ import modelRouter from "./Model/model.route.js";
 import FolderRouter from "./Folder/folder.route.js";
 import RecentRouter from "./Recent/recent.route.js";
 import EmployeeRouter from "./Employee/Employee.route.js";
+import AdminRouter from "./Admin/AdminRoute.js";
 
 
 
@@ -59,6 +60,7 @@ app.use("/models",modelRouter);
 app.use("/folders",FolderRouter);
 app.use("/recents",RecentRouter);
 app.use("/employees",EmployeeRouter);
+app.use("/admins",AdminRouter);
 
 // MongoDB Connection
 mongoose
