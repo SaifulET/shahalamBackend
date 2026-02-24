@@ -4,8 +4,11 @@ import Project from "./Project.model.js";
 import Folder from "../Folder/folder.model.js";
 import mongoose from "mongoose";
 import Employee from "../Employee/Employee.model.js";
+import { createRecentService } from "../Recent/recent.service.js";
 export const createProjectService = async (data) => {
-  return await Project.create(data);
+  const project= await Project.create(data);
+  createRecentService(project.userId,project._id)
+  return project;
 };
 
 

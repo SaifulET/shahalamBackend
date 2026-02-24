@@ -20,7 +20,7 @@ export const createAccessToken = (user) => {
  */
 export const createRefreshToken = (user) => {
   return jwt.sign(
-    { id: user._id },
+    { id: user.id },
     process.env.REFRESH_TOKEN_SECRET,
     { expiresIn: "7d" } // long-lived token
   );

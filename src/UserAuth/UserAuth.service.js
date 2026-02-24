@@ -6,6 +6,8 @@ import User from "./UserAuth.model.js";
 import { createAccessToken, createRefreshToken } from "../Utils/token.js";
 import { sendEmail } from "../Utils/mailer.js";
 import EmployeeModel from "../Employee/Employee.model.js";
+import mongoose from "mongoose";
+import ProjectModel from "../Project/Project.model.js";
 
 /* CREATE USER */
 export const createUser = async (data) => {
@@ -21,6 +23,9 @@ export const createUser = async (data) => {
   });
   
 };
+
+
+
 
 /* LOGIN USER */
 export const loginCompany = async (email, password,role) => {
@@ -39,11 +44,13 @@ export const loginCompany = async (email, password,role) => {
 };
 
 
-export const loginUser = async (email, password,role) => {
+export const loginUser = async (email, password, role) => {
   email = email.toLowerCase();
 
   let account;
   let companyData;
+  let profileImage = null;
+  let accountType;
 
   /* =========================
      1️⃣ TRY COMPANY LOGIN
@@ -58,11 +65,14 @@ export const loginUser = async (email, password,role) => {
       throw new Error("ACCOUNT_INACTIVE");
 
     account = company;
+    accountType = "company";
     companyData = {
       id: company._id,
       name: company.name,
       email: company.email,
+      profileImage: company.profileImage || null,
     };
+    profileImage = company.profileImage || null;
   }
 
   /* =========================
@@ -85,12 +95,14 @@ export const loginUser = async (email, password,role) => {
       throw new Error("COMPANY_INACTIVE");
 
     account = employee;
-
+    accountType = "employee";
     companyData = {
       id: employee.company._id,
       name: employee.company.name,
       email: employee.company.email,
+      profileImage: employee.company.profileImage || null,
     };
+    profileImage = employee.profileImage || null;
   }
 
   /* =========================
@@ -99,18 +111,29 @@ export const loginUser = async (email, password,role) => {
   const payload = {
     id: account._id,
     companyId: companyData.id,
+    type: accountType, // Add type to differentiate in token
   };
 
   const accessToken = createAccessToken(payload);
   const refreshToken = createRefreshToken(payload);
+  
+  // ✅ IMPORTANT: Save refresh token to database
+  account.refreshToken = refreshToken;
+  
+  // If you want to track multiple sessions, you could use an array
+  // account.refreshTokens = [...(account.refreshTokens || []), refreshToken].slice(-5); // Keep last 5
+  
+  await account.save();
+  
   const jsonUserid = companyData.id.toString();
-  console.log("Logged in user:", companyData, jsonUserid); // Debug log
-const jsonUser = {
-  id: jsonUserid,
-  name: companyData.name, 
-  email: companyData.email,
-};
-
+  
+  const jsonUser = {
+    id: jsonUserid,
+    name: companyData.name, 
+    email: companyData.email,
+    profileImage: companyData.profileImage,
+    type: accountType, // Include type in response if needed
+  };
 
   return {
     user: jsonUser,
@@ -147,9 +170,11 @@ if (role !== "superadmin") {
 
     account = company;
     companyData = {
-      id: company._id,
+      id: company._id.toString(),
       name: company.name,
       email: company.email,
+      image:company.profileImage,
+      phone:company.phone
     };
   }
 
@@ -175,9 +200,11 @@ if (role !== "superadmin") {
     account = employee;
 
     companyData = {
-      id: employee.company._id,
+      id: employee.company._id.toString(),
       name: employee.company.name,
       email: employee.company.email,
+      phone:employee.company.phone,
+      image:employee.company.profileImage
     };
   }
 
@@ -210,12 +237,12 @@ export const refreshAccessToken = async (refreshToken) => {
     refreshToken,
     process.env.REFRESH_TOKEN_SECRET
   );
-
   const user = await User.findById(payload.id).select("+refreshToken");
   if (!user || user.refreshToken !== refreshToken)
     throw new Error("FORBIDDEN");
 
   const accessToken = createAccessToken(user);
+  
   return { user, accessToken };
 };
 
@@ -287,6 +314,14 @@ export const setNewPassword = async (email,  newPassword) => {
   user.password = hashedPassword;
   await user.save();
 };
+export const setAdminNewPassword = async (email,  newPassword) => {
+
+  const user = await User.findOne({ email,role:"superadmin" })
+  if (newPassword.length < 8) throw new Error("PASSWORD_TOO_SHORT");
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  user.password = hashedPassword;
+  await user.save();
+};
 
 
 
@@ -339,4 +374,27 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
   await user.save();
 
   return true;
+};
+
+
+
+
+
+
+export const getUserStatsService = async (userId) => {
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new Error("Invalid user ID");
+  }
+
+  const objectId = new mongoose.Types.ObjectId(userId);
+
+  const [totalProjects, totalEmployees] = await Promise.all([
+    ProjectModel.countDocuments({ userId: objectId }),
+    EmployeeModel.countDocuments({ company: objectId }),
+  ]);
+
+  return {
+    totalProjects,
+    totalEmployees,
+  };
 };

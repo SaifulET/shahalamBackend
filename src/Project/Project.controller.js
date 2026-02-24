@@ -2,8 +2,14 @@ import { createProjectService, deleteProjectByIdWithDetailsService, getDashboard
 
 export const createProject = async (req, res) => {
   try {
-    const { userId, name, location, address, image } = req.body;
-console.log("Received project creation request:", req.body);
+    const { userId, name, location, address } = req.body;
+    let image;
+
+      
+    if (req.file) {
+      image = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${req.file.key}`;
+    }
+    
     const project = await createProjectService({
       userId,
       name,

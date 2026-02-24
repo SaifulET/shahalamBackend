@@ -11,7 +11,6 @@ export const sendEmail = async ({ to, subject, text, html }) => {
     },
   });
 
-  console.log("SMTP HOST:", process.env.SMTP_HOST);
 
   await transporter.sendMail({
     from: `<${process.env.SMTP_USER}>`,

@@ -9,7 +9,9 @@ import {
   updateProfile,
   loginCompany,
   changePassword,
-  loginSuperAdmin
+  loginSuperAdmin,
+  getUserStatsService,
+  setAdminNewPassword
 } from "./UserAuth.service.js";
 
 /* SIGNUP */
@@ -33,7 +35,6 @@ export const signup = async (req, res) => {
 /* LOGIN */
 export const login = async (req, res) => {
   try {
-    console.log("Login attempt for email:", req.body.email); 
     const role = req.body.role || "user"; 
     const { user, accessToken, refreshToken } = await loginUser(
       req.body.email,
@@ -47,13 +48,13 @@ export const login = async (req, res) => {
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-console.log("User logged inssssssss:", user);
     res.json({
       accessToken,
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
+       profileImage:user.profileImage,
         role: user.role,
       },
     });
@@ -70,7 +71,7 @@ export const loginAdmin = async (req, res) => {
       req.body.password,
       role
     );
-
+// console.log("dkd",user._id.toString(),"user")
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
@@ -81,9 +82,11 @@ export const loginAdmin = async (req, res) => {
     res.json({
       accessToken,
       user: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
+        phone:user.phone,
+        profileImage:user.profileImage,
         role: user.role,
       },
     });
@@ -99,7 +102,8 @@ export const loginAdmin = async (req, res) => {
 
 export const loginCompanyController = async (req, res) => {
   try {
-    const role = req.body.role || "user"; 
+   
+    const role = 'admin'; 
     const { user, accessToken, refreshToken } = await loginCompany(
       req.body.email,
       req.body.password,
@@ -134,16 +138,15 @@ export const loginCompanyController = async (req, res) => {
 /* REFRESH */
 export const refresh = async (req, res) => {
   try {
-    console.log("Received refresh token:", req.cookies.refreshToken);
     const { user, accessToken } = await refreshAccessToken(
       req.cookies.refreshToken
     );
-
     res.json({
       accessToken,
       user: {
         id: user._id,
         email: user.email,
+        profileImage:user.profileImage,
         role: user.role,
       },
     });
@@ -172,7 +175,6 @@ export const forgotPassword = async (req, res) => {
 
     res.json({ message: "OTP sent to your email/phone" }); // remove otp in production
   } catch (err) {
-    console.log("keke",err)
     res.status(400).json({error:"failed", message: err.message });
   }
 };
@@ -195,6 +197,20 @@ export const setNewPasswordController = async (req, res) => {
     const { email, newPassword } = req.body;
    
     await setNewPassword(email,  newPassword);
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+
+
+export const setAdminNewPasswordController = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+   
+    await setAdminNewPassword(email,  newPassword);
+    console.log("updatedd")
     res.json({ message: "Password updated successfully" });
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -239,7 +255,6 @@ export const getUserById = async (req, res) => {
 export const editProfile = async (req, res) => {
   const userId = req.params.userId; // assuming you have auth middleware
   const profileData = req.body;
-  console.log("Received profile update request for userId:", userId);
     if(req.file){ 
       profileData.profileImage = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${req.file.key}`;
     }
@@ -275,5 +290,28 @@ export const changePasswordController = async (req, res) => {
     res.status(200).json({ message: "Password updated successfully." });
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+
+
+
+export const getUserStatsController = async (req, res) => {
+  try {
+
+    const { userId } = req.params;
+
+    const stats = await getUserStatsService(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "User dashboard stats fetched successfully",
+      data: stats,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Something went wrong",
+    });
   }
 };

@@ -7,7 +7,6 @@ import { addUnitService, createFloorService, deleteFloorService, deleteUnitServi
 export const createFloor = async (req, res) => {
   try {
     const { projectId, name,  units } = req.body;
-console.log("Creating floorddd with data:", { projectId, name, units });
 let floor;
 if(units && Array.isArray(units) && units.length > 0){
      floor = await createFloorService({

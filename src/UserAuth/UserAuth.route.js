@@ -12,6 +12,8 @@ import {
   loginCompanyController,
   changePasswordController,
   loginAdmin,
+  getUserStatsController,
+  setAdminNewPasswordController,
 } from "./UserAuth.controller.js";
 import { SingleuploadMiddleware } from "../Middleware/aws.middleware.js";
 
@@ -28,6 +30,7 @@ Authrouter.post("/logout", logout);
 Authrouter.post("/forgot-password", forgotPassword);
 Authrouter.post("/verify-otp", verifyOtpController);
 Authrouter.post("/set-new-password", setNewPasswordController);
+Authrouter.post("/admin/set-new-password", setAdminNewPasswordController);
 
 
 Authrouter.patch("/change-password", changePasswordController);
@@ -36,5 +39,6 @@ Authrouter.patch("/change-password", changePasswordController);
 
 Authrouter.get("/:userId", getUserById);
 Authrouter.patch("/:userId",SingleuploadMiddleware, editProfile);
+Authrouter.get("/totalEmployeeProject/:userId", getUserStatsController);
 
 export default Authrouter;
