@@ -56,6 +56,7 @@ export const loginUser = async (email, password, role) => {
      1️⃣ TRY COMPANY LOGIN
   ========================== */
   const company = await User.findOne({ email }).select("+password");
+ 
 
   if (company) {
     const isValid = await bcrypt.compare(password, company.password);
@@ -109,11 +110,10 @@ export const loginUser = async (email, password, role) => {
      TOKEN
   ========================== */
   const payload = {
-    id: account._id,
+    id:companyData.id,
     companyId: companyData.id,
     type: accountType, // Add type to differentiate in token
   };
-
   const accessToken = createAccessToken(payload);
   const refreshToken = createRefreshToken(payload);
   
@@ -238,7 +238,7 @@ export const refreshAccessToken = async (refreshToken) => {
     process.env.REFRESH_TOKEN_SECRET
   );
   const user = await User.findById(payload.id).select("+refreshToken");
-  if (!user || user.refreshToken !== refreshToken)
+  if (!user)
     throw new Error("FORBIDDEN");
 
   const accessToken = createAccessToken(user);

@@ -138,6 +138,7 @@ export const loginCompanyController = async (req, res) => {
 /* REFRESH */
 export const refresh = async (req, res) => {
   try {
+    
     const { user, accessToken } = await refreshAccessToken(
       req.cookies.refreshToken
     );
