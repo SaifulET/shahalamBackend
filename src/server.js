@@ -29,6 +29,8 @@ const allowedOrigins = [
   "*",
   "http://localhost:3001",
   "http://localhost:3000",
+  "https://admin.ur-wsl.com",
+  "https://ur-wsl.com",
 
   "http://localhost:5173",
   
