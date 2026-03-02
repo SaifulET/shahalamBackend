@@ -95,28 +95,37 @@ export const getDashboardService = async (companyId) => {
   const companyObjectId = new mongoose.Types.ObjectId(companyId);
 
   // 1️⃣ Get last 3 projects with unit count
-  const recentProjects = await Project.aggregate([
-    {
-      $match: { userId: companyObjectId },
+const recentProjects = await Project.aggregate([
+  { $match: { userId: companyObjectId } },
+  { $sort: { createdAt: -1 } },
+  { $limit: 3 },
+
+  {
+    $lookup: {
+      from: "floors",              // collection for Floor model
+      localField: "_id",           // Project._id
+      foreignField: "projectId",   // Floor.projectId
+      as: "floors",
     },
-    { $sort: { createdAt: -1 } },
-    { $limit: 3 },
-    {
-      $lookup: {
-        from: "units",
-        localField: "_id",
-        foreignField: "project",
-        as: "units",
+  },
+
+  // sum sizes of each floor.units array
+  {
+    $addFields: {
+      unitCount: {
+        $sum: {
+          $map: {
+            input: "$floors",
+            as: "f",
+            in: { $size: { $ifNull: ["$$f.units", []] } },
+          },
+        },
       },
     },
-    {
-      $project: {
-        _id: 0,
-        name: 1,
-        unitCount: { $size: "$units" },
-      },
-    },
-  ]);
+  },
+
+  { $project: { _id: 0, name: 1, unitCount: 1 } },
+]);
 
   // 2️⃣ Total active employees
   const totalActiveEmployees = await Employee.countDocuments({

@@ -6,6 +6,7 @@ const unitSchema = new mongoose.Schema(
     name: {
       type: String,
       trim: true,
+      unique:true,
     },
     status: {
       type: String,
