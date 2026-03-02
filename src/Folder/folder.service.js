@@ -1,5 +1,6 @@
 import Folder from "./folder.model.js";
-
+import Project from "../Project/Project.model.js"
+import mongoose from "mongoose";
 // Create Folder
 export const createFolderService = async (data) => {
   return await Folder.create(data);
@@ -16,6 +17,34 @@ export const addProjectToFolderService = async (folderId, projectId) => {
   );
 };
 
+
+
+
+export const getProjectsByFolderId = async (folderId) => {
+  // Validate ObjectId
+  if (!mongoose.Types.ObjectId.isValid(folderId)) {
+    throw new Error("Invalid folderId");
+  }
+
+  // Find folder
+  const folder = await Folder.findById(folderId).select("projects");
+
+  if (!folder) {
+    const error = new Error("Folder not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Get projects inside folder
+  const projects = await Project.find({
+    _id: { $in: folder.projects },
+  }).sort({ createdAt: -1 });
+
+  return {
+    projects,
+    total: projects.length,
+  };
+};
 
 
 

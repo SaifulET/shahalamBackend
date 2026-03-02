@@ -3,7 +3,8 @@ import {
   addProjectToFolderService,
   getFoldersByUserIdService,
   getFolderByIdService,
-  getAllFoldersService
+  getAllFoldersService,
+  getProjectsByFolderId
 } from "./folder.service.js";
 
 // ✅ Create Folder
@@ -64,6 +65,27 @@ export const addProjectToFolder = async (req, res) => {
   }
 };
 
+
+export const getFolderProjects = async (req, res) => {
+  try {
+    const { folderId } = req.params;
+
+    const data = await getProjectsByFolderId(folderId);
+
+    return res.status(200).json({
+      success: true,
+      projects: data.projects,
+      total: data.total,
+      page: null,
+      totalPages: null,
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Server error",
+    });
+  }
+};
 
 
 
