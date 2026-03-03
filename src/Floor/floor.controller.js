@@ -97,7 +97,6 @@ export const updateUnit = async (req, res) => {
       unitId,
       updateData
     );
-
     if (!updatedFloor) {
       return res.status(404).json({
         success: false,
@@ -112,6 +111,7 @@ export const updateUnit = async (req, res) => {
     });
 
   } catch (error) {
+
     res.status(500).json({
       success: false,
       message: error.message,
@@ -249,7 +249,6 @@ export const addUnit = async (req, res) => {
     };
 
     const updatedFloor = await addUnitService(floorId, newUnit);
-
     if (!updatedFloor) {
       return res.status(404).json({
         success: false,

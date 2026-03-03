@@ -48,6 +48,7 @@ export const login = async (req, res) => {
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+    console.log(user,"user")
     res.json({
       accessToken,
       user: {
@@ -56,6 +57,8 @@ export const login = async (req, res) => {
         email: user.email,
        profileImage:user.profileImage,
         role: user.role,
+        instagramLink:user.instagramLink 
+        
       },
     });
   } catch {

@@ -6,7 +6,7 @@ const unitSchema = new mongoose.Schema(
     name: {
       type: String,
       trim: true,
-      unique:true,
+     
     },
     status: {
       type: String,
@@ -29,8 +29,7 @@ const floorSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      trim: true,
-      unique:true
+      trim: true
     },
 
     unitName: {

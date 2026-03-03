@@ -100,12 +100,7 @@ export const addUnitService = async (floorId, unitData) => {
   }
 
   // Check for duplicate unit name
-  const duplicate = floor.units.find(
-    (u) => u.name.toLowerCase() === unitData.name.toLowerCase()
-  );
-  if (duplicate) {
-    throw new Error("Unit name already exists in this floor");
-  }
+ 
 
   // Add unit
   floor.units.push(unitData);

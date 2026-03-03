@@ -1,0 +1,500 @@
+SALAMM BACKEND API DOCUMENTATION
+Generated from code in: salammBackend/src
+
+==================================================
+1) OVERVIEW
+==================================================
+- Runtime: Node.js + Express + MongoDB (Mongoose)
+- Main server file: src/server.js
+- Base URL (local): http://localhost:5001
+- Health route:
+  - GET / -> "hellow"
+
+Mounted route groups:
+- /auth
+- /floors
+- /projects
+- /models
+- /folders
+- /recents
+- /employees
+- /admins
+
+==================================================
+2) AUTHENTICATION METHOD
+==================================================
+Token strategy:
+1. Access Token (JWT)
+   - Created by createAccessToken() in src/Utils/token.js
+   - Secret: ACCESS_TOKEN_SECRET
+   - Expiry: 15m
+   - Expected in header: Authorization: Bearer <token>
+
+2. Refresh Token (JWT)
+   - Created by createRefreshToken() in src/Utils/token.js
+   - Secret: REFRESH_TOKEN_SECRET
+   - Expiry: 7d
+   - Sent in httpOnly cookie: refreshToken
+   - Cookie options in login:
+     - httpOnly: true
+     - secure: true
+     - sameSite: strict
+     - maxAge: 7 days
+
+Refresh flow:
+- POST /auth/refresh reads req.cookies.refreshToken, verifies token, returns new accessToken.
+
+Logout flow:
+- POST /auth/logout clears refresh token cookie and nulls saved refresh token in User collection.
+
+IMPORTANT IMPLEMENTATION NOTES:
+- Most routes are not protected by auth middleware (`auth.middleware.js` is mostly unused).
+- `/employees/:employeeId` delete reads `req.user.id` but route does not apply auth middleware, so this may fail.
+- Refresh service checks User collection only; employee refresh-token persistence differs from user persistence.
+
+==================================================
+3) CORS + COOKIES
+==================================================
+Allowed origins in src/server.js:
+- *
+- http://localhost:3001
+- http://localhost:3000
+- https://admin.ur-wsl.com
+- https://ur-wsl.com
+- http://localhost:5173
+
+Credentials:
+- CORS credentials enabled (`credentials: true`)
+- Cookie parser enabled.
+
+==================================================
+4) FILE UPLOADS (AWS S3)
+==================================================
+Middleware file: src/Middleware/aws.middleware.js
+- Field name for single uploads: image
+- Storage: AWS S3 (multer-s3)
+- Only image mimetypes are accepted
+- SingleuploadMiddleware file size limit: 20 MB
+- Uploaded key format: uploads/<timestamp>-<sanitizedOriginalName>
+
+Endpoints using SingleuploadMiddleware:
+- POST /auth/signup
+- PATCH /auth/:userId
+- POST /projects
+- POST /employees
+
+==================================================
+5) ENDPOINT DOCUMENTATION
+==================================================
+
+----------------------------------------------
+5.1 AUTH ROUTES (/auth)
+File: src/UserAuth/UserAuth.route.js
+----------------------------------------------
+
+POST /auth/signup
+- Multipart/form-data (optional image file under "image")
+- Body (typical): name, email, password, role, ...profile fields
+- Creates user in User collection with hashed password
+- Response: 201 { message, user: { id, email } }
+
+POST /auth/login
+- Body: { email, password, role? } (role default "user" in controller)
+- Logs in company user or employee (see service logic)
+- Sets refreshToken cookie
+- Response: { accessToken, user: { id, name, email, profileImage, role } }
+
+POST /auth/superadmin-login
+- Body: { email, password, role? } (role defaults "superadmin")
+- Superadmin login endpoint
+- Sets refreshToken cookie
+- Response: { accessToken, user: { id, name, email, phone, profileImage, role } }
+
+POST /auth/login-company
+- Body: { email, password }
+- Forces role = "admin"
+- Sets refreshToken cookie
+- Response: { accessToken, user: { id, name, email, role, profileImage } }
+
+POST /auth/refresh
+- Reads refreshToken cookie
+- Response: { accessToken, user: { id, email, profileImage, role } }
+- 403 on failure
+
+POST /auth/logout
+- Reads refreshToken cookie
+- Clears cookie and removes token reference
+- Response: { message: "Logged out" }
+
+POST /auth/forgot-password
+- Body: { email }
+- Generates and stores OTP + expiry in User
+- Sends email via SMTP
+- Response: { message: "OTP sent to your email/phone" }
+
+POST /auth/verify-otp
+- Body: { email, otp }
+- Validates OTP and expiry
+- Response: { message: "OTP verified" }
+
+POST /auth/set-new-password
+- Body: { email, newPassword }
+- Sets new hashed password (min length 8 check in service)
+- Response: { message: "Password updated successfully" }
+
+POST /auth/admin/set-new-password
+- Body: { email, newPassword }
+- Same as above but for role superadmin
+
+PATCH /auth/change-password
+- Body: { userId, currentPassword, newPassword }
+- Verifies current password then updates password hash
+
+GET /auth/:userId
+- Gets one user by ID
+
+PATCH /auth/:userId
+- Multipart/form-data (optional "image")
+- Updates user profile fields
+
+GET /auth/totalEmployeeProject/:userId
+- Returns totalProjects + totalEmployees for a company/user
+
+ROUTE ORDER NOTE:
+- In route file, GET /:userId appears before GET /totalEmployeeProject/:userId.
+- Because of this order, /auth/totalEmployeeProject/:userId can be captured by /auth/:userId and fail.
+
+----------------------------------------------
+5.2 FLOOR ROUTES (/floors)
+File: src/Floor/floor.route.js
+----------------------------------------------
+
+POST /floors/
+- Body: { projectId, name, units? }
+- units (if provided) should be array of unit names; service maps to status "available"
+
+GET /floors/project/:projectId
+- List floors by project
+
+GET /floors/:floorId
+- Get one floor
+
+PATCH /floors/:floorId/:unitId
+- Body optional: { name, status }
+- Updates one embedded unit
+
+PATCH /floors/:floorId
+- Body: { name }
+- Updates floor name
+
+POST /floors/:floorId/unit
+- Body: { name, status? }
+- Adds one unit (rejects duplicate unit name in same floor)
+
+DELETE /floors/:floorId
+- Deletes floor
+
+DELETE /floors/:floorId/:unitId
+- Deletes one embedded unit
+
+----------------------------------------------
+5.3 PROJECT ROUTES (/projects)
+File: src/Project/Project.route.js
+----------------------------------------------
+
+POST /projects/
+- Multipart/form-data (optional image)
+- Body: { userId, name, location, address }
+- Creates project and also adds Recent entry via createRecentService(userId, projectId)
+
+GET /projects/my-projects/:userId
+- Query: page, limit
+- Returns paginated projects for user
+
+GET /projects/:projectId
+- Returns combined details:
+  - project
+  - models[]
+  - floors[]
+  - folders[] (limited projection)
+  - floorsCount
+  - floorWithUnitCounts (aggregation)
+
+DELETE /projects/:projectId
+- Deletes project
+- Cascades:
+  - delete models by projectId
+  - delete floors by projectId
+  - pull projectId from folders.projects[]
+
+GET /projects/dashboard/:companyId
+- Returns dashboard payload:
+  - totalActiveEmployees
+  - totalProjects
+  - recentProjects (aggregation result)
+
+ROUTE ORDER NOTE:
+- Route /projects/:projectId is declared before /projects/dashboard/:companyId.
+- /projects/dashboard/:companyId can be captured by /projects/:projectId due to order.
+
+----------------------------------------------
+5.4 MODEL ROUTES (/models)
+File: src/Model/model.route.js
+----------------------------------------------
+
+POST /models/
+- Body: { projectId, name, area?, face? }
+- Creates model
+
+GET /models/:projectid
+- Lists all models for projectId
+
+GET /models/model/:id
+- Gets one model by id
+
+PATCH /models/:id
+- Body optional: { name, area, face }
+- Updates model fields
+
+DELETE /models/:id
+- Deletes model
+
+----------------------------------------------
+5.5 FOLDER ROUTES (/folders)
+File: src/Folder/folder.route.js
+----------------------------------------------
+
+POST /folders/
+- Body: { userId, name, description?, color? }
+- Creates folder
+
+PATCH /folders/:folderId/add-project
+- Body: { projectId }
+- Adds project to folder via $addToSet (no duplicates)
+
+GET /folders/
+- Returns all folders with populated projects
+
+GET /folders/:folderId
+- Returns single folder with populated projects
+
+GET /folders/user/:userId
+- Returns folders for specific user, sorted newest first, populated projects
+
+----------------------------------------------
+5.6 RECENT ROUTES (/recents)
+File: src/Recent/recent.route.js
+----------------------------------------------
+
+POST /recents/
+- Body: { userId, projectId }
+- Upserts recent view (updates viewedAt if exists)
+
+GET /recents/user/:userId
+- Gets recent projects for user (populates projectId)
+
+DELETE /recents/:recentId
+- Deletes one recent entry
+
+----------------------------------------------
+5.7 EMPLOYEE ROUTES (/employees)
+File: src/Employee/Employee.route.js
+----------------------------------------------
+
+POST /employees/
+- Multipart/form-data (optional image)
+- Body includes: userId (company id), name, email, password, phone?
+- Creates employee under company
+
+GET /employees/allemployee/:id
+- Lists all employees by company id
+
+GET /employees/allblockedemployee/:id
+- Lists blocked employees by company id
+
+GET /employees/:employeeId
+- Gets employee by id
+
+PATCH /employees/:employeeId
+- Updates employee fields (if password present, re-hashes)
+
+DELETE /employees/:employeeId
+- Deletes employee by req.user.id and employeeId
+- NOTE: req.user requires auth middleware, but route currently has none.
+
+----------------------------------------------
+5.8 ADMIN ROUTES (/admins)
+File: src/Admin/AdminRoute.js
+----------------------------------------------
+
+GET /admins/role
+- Lists users with role "admin"
+
+GET /admins/blocked
+- Lists admins/superadmins with status "blocked"
+
+GET /admins/:id
+- Gets admin by id (role admin/superadmin)
+
+PATCH /admins/:id
+- Updates admin (role "admin" only in service filter)
+
+DELETE /admins/:id
+- Deletes admin/superadmin by id
+
+GET /admins/get/statistics
+- Returns:
+  - totalAdmins
+  - totalActiveAdmins
+
+ROUTE ORDER NOTE:
+- /admins/:id is declared before /admins/get/statistics.
+- /admins/get/statistics can be captured by /admins/:id due to order.
+
+==================================================
+6) DATABASE STRUCTURE (MONGOOSE MODELS)
+==================================================
+
+----------------------------------------------
+6.1 User (collection: users)
+File: src/UserAuth/UserAuth.model.js
+----------------------------------------------
+Fields:
+- name: String, required, trim, max 80
+- email: String, required, lowercase, trim, indexed
+- phone: String, unique sparse
+- password: String, required, select:false, min 6
+- refreshToken: String, select:false
+- otp: String, select:false
+- otpExpiry: Date, select:false
+- profileImage: String, default ""
+- tagline: String, max 120
+- description: String, max 500
+- website: String
+- instagramLink: String
+- country: String
+- city: String
+- postalCode: String, max 20
+- location: String, max 120
+- role: enum("user","admin","superadmin"), default "user", indexed
+- status: enum("active","inactive","blocked"), default "active", indexed
+- joinedDate: Date, default now
+- timestamps: createdAt, updatedAt
+
+Indexes:
+- compound unique: { email: 1, role: 1 }
+
+----------------------------------------------
+6.2 Employee (collection: employees)
+File: src/Employee/Employee.model.js
+----------------------------------------------
+Fields:
+- company: ObjectId ref User, required, indexed
+- name: String, required
+- email: String, required, lowercase, trim
+- password: String, required, select:false
+- phone: String
+- profileImage: String
+- joiningDate: Date default now
+- status: enum("active","blocked"), default "active"
+- timestamps
+
+Indexes:
+- compound unique: { company: 1, email: 1 }
+
+----------------------------------------------
+6.3 Project (collection: projects)
+File: src/Project/Project.model.js
+----------------------------------------------
+Fields:
+- userId: ObjectId ref User, required, indexed
+- name: String, required
+- location: String
+- address: String
+- image: String
+- timestamps
+
+----------------------------------------------
+6.4 Floor (collection: floors)
+File: src/Floor/floor.model.js
+----------------------------------------------
+Fields:
+- projectId: ObjectId ref Project, required, indexed
+- name: String, required, trim
+- unitName: String, trim (legacy/single value field)
+- units: [embedded unit]
+  - unit.name: String, trim
+  - unit.status: enum("available","reserved","sold"), default "available"
+  - each unit has its own _id
+- timestamps
+
+----------------------------------------------
+6.5 Model (collection: models)
+File: src/Model/model.model.js
+----------------------------------------------
+Fields:
+- projectId: ObjectId ref Project, required, indexed
+- name: String, required
+- area: Number
+- face: String
+- timestamps
+
+----------------------------------------------
+6.6 Folder (collection: folders)
+File: src/Folder/folder.model.js
+----------------------------------------------
+Fields:
+- userId: ObjectId ref User, required, indexed
+- name: String, required
+- description: String
+- color: String
+- projects: [ObjectId ref Project]
+- timestamps
+
+----------------------------------------------
+6.7 Recent (collection: recents)
+File: src/Recent/recent.model.js
+----------------------------------------------
+Fields:
+- userId: ObjectId ref User, required, indexed
+- projectId: ObjectId ref Project, required
+- viewedAt: Date default now
+
+Indexes:
+- { userId: 1, viewedAt: -1 }
+
+==================================================
+7) ENVIRONMENT VARIABLES USED
+==================================================
+- PORT
+- MONGO_URI
+- ACCESS_TOKEN_SECRET
+- REFRESH_TOKEN_SECRET
+- SMTP_HOST
+- SMTP_PORT
+- SMTP_USER
+- SMTP_PASS
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+- AWS_REGION
+- AWS_BUCKET_NAME
+
+==================================================
+8) RESPONSE STYLE SUMMARY
+==================================================
+Common patterns used:
+- success flag + message + data (many endpoints)
+- some auth errors return raw status (401/403) without body
+- inconsistent error shapes across modules (400/404/500 variations)
+
+==================================================
+9) SECURITY / MAINTENANCE NOTES (BASED ON CURRENT CODE)
+==================================================
+1. Many endpoints are currently public (no auth middleware).
+2. Route order conflicts exist in:
+   - /auth (totalEmployeeProject path)
+   - /projects (dashboard path)
+   - /admins (get/statistics path)
+3. secure cookie=true requires HTTPS; local HTTP may not persist refresh cookie.
+4. CORS list includes "*" with credentials=true (not recommended for production).
+
