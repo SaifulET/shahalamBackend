@@ -5,12 +5,17 @@ import Folder from "../Folder/folder.model.js";
 import mongoose from "mongoose";
 import Employee from "../Employee/Employee.model.js";
 import { createRecentService } from "../Recent/recent.service.js";
+import { addProjectToFolderService } from "../Folder/folder.service.js";
 export const createProjectService = async (data) => {
   const project= await Project.create(data);
-  createRecentService(project.userId,project._id)
+  await createRecentService(project.userId,project._id)
   return project;
 };
-
+export const createProjectAddtoFolderService= async(data,folderId)=>{
+    const project= await Project.create(data);
+    await addProjectToFolderService(folderId, project._id);
+    return project;
+}
 
 export const getProjectsByUserService = async (
   userId,

@@ -1,4 +1,4 @@
-import { createProjectService, deleteProjectByIdWithDetailsService, getDashboardService, getProjectByIdWithDetailsService, getProjectsByUserService } from "./project.service.js";
+import { createProjectAddtoFolderService, createProjectService, deleteProjectByIdWithDetailsService, getDashboardService, getProjectByIdWithDetailsService, getProjectsByUserService } from "./project.service.js";
 
 export const createProject = async (req, res) => {
   try {
@@ -32,6 +32,43 @@ export const createProject = async (req, res) => {
     });
   }
 };
+
+export const createProjectAndAddtoFolder = async (req, res) => {
+  try {
+    const { userId, name, location, address ,folderId} = req.body;
+    let image;
+
+      
+    if (req.file) {
+      image = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${req.file.key}`;
+    }
+    
+    const project = await createProjectAddtoFolderService({
+      userId,
+      name,
+      location,
+      address,
+      image,
+    },folderId);
+
+
+    res.status(201).json({
+      success: true,
+      message: "Project created successfully",
+      data: project,
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+
 
 
 export const getMyProjects = async (req, res) => {
