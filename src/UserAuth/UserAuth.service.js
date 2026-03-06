@@ -103,7 +103,7 @@ export const loginUser = async (email, password, role) => {
       name: employee.company.name,
       email: employee.company.email,
       profileImage: employee.company.profileImage || null,
-      instagramLink:employee.instagramLink || null,
+      instagramLink:employee.company.instagramLink || null,
     };
     profileImage = employee.profileImage || null;
   }
@@ -134,7 +134,7 @@ export const loginUser = async (email, password, role) => {
     name: companyData.name, 
     email: companyData.email,
     profileImage: companyData.profileImage,
-    instagramLink:company.instagramLink,
+    instagramLink:companyData.instagramLink,
 
     type: accountType, // Include type in response if needed
   };
