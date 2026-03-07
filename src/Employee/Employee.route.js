@@ -22,6 +22,7 @@ EmployeeRouter.get("/allblockedemployee/:id",getAllBlockedEmployeesByCompany);
 
 EmployeeRouter.get("/:employeeId", getEmployeeById);
 
+
 EmployeeRouter.patch("/:employeeId",  updateEmployee);
 
 EmployeeRouter.delete("/:employeeId",  deleteEmployee);

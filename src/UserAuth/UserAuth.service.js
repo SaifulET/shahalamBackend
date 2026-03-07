@@ -402,3 +402,20 @@ export const getUserStatsService = async (userId) => {
     totalEmployees,
   };
 };
+
+
+export const deleteAdminService = async (
+ 
+  adminId
+) => {
+   const admin = await User.findOneAndDelete({
+     _id:adminId
+   
+  });
+
+  if (!adminId) {
+    throw new Error("admin not found");
+  }
+
+  return admin;
+};

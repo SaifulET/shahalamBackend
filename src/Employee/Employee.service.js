@@ -91,12 +91,12 @@ export const getAllBlockedEmployeesByCompanyService = async (
    DELETE EMPLOYEE
 ============================== */
 export const deleteEmployeeService = async (
-  companyId,
+ 
   employeeId
 ) => {
-  const employee = await EmployeeModel.findOneAndDelete({
-    _id: employeeId,
-    company: companyId,
+   const employee = await EmployeeModel.findOneAndDelete({
+     _id:employeeId
+   
   });
 
   if (!employee) {

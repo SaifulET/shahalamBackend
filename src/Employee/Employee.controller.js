@@ -133,7 +133,7 @@ export const getAllBlockedEmployeesByCompany = async (
 export const deleteEmployee = async (req, res) => {
   try {
     await deleteEmployeeService(
-      req.user.id,
+      
       req.params.employeeId
     );
 

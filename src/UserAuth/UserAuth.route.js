@@ -14,6 +14,7 @@ import {
   loginAdmin,
   getUserStatsController,
   setAdminNewPasswordController,
+  deleteAdminController,
 } from "./UserAuth.controller.js";
 import { SingleuploadMiddleware } from "../Middleware/aws.middleware.js";
 
@@ -40,5 +41,9 @@ Authrouter.patch("/change-password", changePasswordController);
 Authrouter.get("/:userId", getUserById);
 Authrouter.patch("/:userId",SingleuploadMiddleware, editProfile);
 Authrouter.get("/totalEmployeeProject/:userId", getUserStatsController);
+
+
+Authrouter.delete("/:adminId",  deleteAdminController);
+
 
 export default Authrouter;

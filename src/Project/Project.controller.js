@@ -1,4 +1,4 @@
-import { createProjectAddtoFolderService, createProjectService, deleteProjectByIdWithDetailsService, getDashboardService, getProjectByIdWithDetailsService, getProjectsByUserService } from "./project.service.js";
+import { createProjectAddtoFolderService, createProjectService, deleteProjectByIdWithDetailsService, getDashboardService, getProjectByIdWithDetailsService, getProjectsByUserService, updateProjectName } from "./project.service.js";
 
 export const createProject = async (req, res) => {
   try {
@@ -66,6 +66,29 @@ export const createProjectAndAddtoFolder = async (req, res) => {
     });
   }
 };
+
+export const editProjectNameController=async(req,res)=>{
+
+  try {
+    const { projectId, name} = req.body;
+    const project = await updateProjectName({
+      projectId,
+      name 
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Project name updated successfully",
+      data: project,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
 
 
 

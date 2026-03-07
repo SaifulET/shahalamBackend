@@ -11,7 +11,8 @@ import {
   changePassword,
   loginSuperAdmin,
   getUserStatsService,
-  setAdminNewPassword
+  setAdminNewPassword,
+  deleteAdminService
 } from "./UserAuth.service.js";
 
 /* SIGNUP */
@@ -316,6 +317,27 @@ export const getUserStatsController = async (req, res) => {
     return res.status(400).json({
       success: false,
       message: error.message || "Something went wrong",
+    });
+  }
+};
+
+
+
+export const deleteAdminController = async (req, res) => {
+  try {
+    await deleteAdminService(
+      
+      req.params.adminId
+    );
+
+    res.json({
+      success: true,
+      message: "admin deleted successfully",
+    });
+  } catch (error) {
+    res.status(404).json({
+      success: false,
+      message: error.message,
     });
   }
 };

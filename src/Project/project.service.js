@@ -149,3 +149,18 @@ const recentProjects = await Project.aggregate([
     recentProjects,
   };
 };
+
+
+export const updateProjectName = async ({projectId, name}) => {
+  const project = await Project.findByIdAndUpdate(
+    projectId,
+    { name: name },
+    { new: true }
+  );
+
+  if (!project) {
+    throw new Error("Project not found");
+  }
+
+  return project;
+};

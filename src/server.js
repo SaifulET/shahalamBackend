@@ -32,7 +32,7 @@ const allowedOrigins = [
   "https://admin.ur-wsl.com",
   "https://ur-wsl.com",
 
-  "http://localhost:5173",
+  "http://localhost:5174",
   
 ];
 
