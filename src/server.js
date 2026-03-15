@@ -26,25 +26,41 @@ const app = express();
 // Middlewares
 
 const allowedOrigins = [
-  "*",
   "http://localhost:3001",
   "http://localhost:3000",
   "https://admin.ur-wsl.com",
   "https://ur-wsl.com",
-
+  "http://localhost:5173",
   "http://localhost:5174",
-  
 ];
 
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+
+  try {
+    const { protocol, hostname } = new URL(origin);
+    const isHttp = protocol === "http:" || protocol === "https:";
+    const isLocalHost =
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "host.docker.internal";
+
+    return isHttp && isLocalHost;
+  } catch {
+    return false;
+  }
+};
+
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true); // allow the request
+  origin(origin, callback) {
+    if (isAllowedOrigin(origin)) {
+      callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      callback(new Error(`Not allowed by CORS: ${origin}`));
     }
   },
-  credentials: true
+  credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
