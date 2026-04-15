@@ -22,6 +22,8 @@ import AdminRouter from "./Admin/AdminRoute.js";
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 
 // Middlewares
 
@@ -29,7 +31,9 @@ const allowedOrigins = [
   "http://localhost:3001",
   "http://localhost:3000",
   "https://admin.ur-wsl.com",
+  "https://www.admin.ur-wsl.com",
   "https://ur-wsl.com",
+  "https://www.ur-wsl.com",
   "http://localhost:5173",
   "http://localhost:5174",
 ];

@@ -55,12 +55,23 @@ export const loginUser = async (email, password, role) => {
   /* =========================
      1️⃣ TRY COMPANY LOGIN
   ========================== */
-  const company = await User.findOne({ email }).select("+password");
- 
+  const users = await User.find({ email }).select("+password");
+  const rolePriority = [role, "user", "admin", "superadmin"].filter(Boolean);
+  const dedupedRolePriority = [...new Set(rolePriority)];
+  const prioritizedUsers = users.sort((a, b) => {
+    const aPriority = dedupedRolePriority.indexOf(a.role);
+    const bPriority = dedupedRolePriority.indexOf(b.role);
+    const normalizedAPriority = aPriority === -1 ? Number.MAX_SAFE_INTEGER : aPriority;
+    const normalizedBPriority = bPriority === -1 ? Number.MAX_SAFE_INTEGER : bPriority;
 
-  if (company) {
+    return normalizedAPriority - normalizedBPriority;
+  });
+
+  for (const company of prioritizedUsers) {
     const isValid = await bcrypt.compare(password, company.password);
-    if (!isValid) throw new Error("INVALID_CREDENTIALS");
+    if (!isValid) {
+      continue;
+    }
 
     if (company.status !== "active")
       throw new Error("ACCOUNT_INACTIVE");
@@ -75,6 +86,7 @@ export const loginUser = async (email, password, role) => {
       instagramLink:company.instagramLink || null,
     };
     profileImage = company.profileImage || null;
+    break;
   }
 
   /* =========================
@@ -119,13 +131,9 @@ export const loginUser = async (email, password, role) => {
   const accessToken = createAccessToken(payload);
   const refreshToken = createRefreshToken(payload);
   
-  // ✅ IMPORTANT: Save refresh token to database
-  account.refreshToken = refreshToken;
-  
-  // If you want to track multiple sessions, you could use an array
-  // account.refreshTokens = [...(account.refreshTokens || []), refreshToken].slice(-5); // Keep last 5
-  
-  await account.save();
+  // Persist the refresh token on the company user because the token payload
+  // uses the company id for both company and employee logins.
+  await User.findByIdAndUpdate(companyData.id, { refreshToken });
   
   const jsonUserid = companyData.id.toString();
   
@@ -223,6 +231,9 @@ if (role !== "superadmin") {
   const accessToken = createAccessToken(payload);
   const refreshToken = createRefreshToken(payload);
 
+  account.refreshToken = refreshToken;
+  await account.save();
+
   return {
     user: companyData,
     accessToken,
@@ -244,6 +255,9 @@ export const refreshAccessToken = async (refreshToken) => {
   const user = await User.findById(payload.id).select("+refreshToken");
   if (!user)
     throw new Error("FORBIDDEN");
+  if (user.refreshToken !== refreshToken) {
+    throw new Error("FORBIDDEN");
+  }
 
   const accessToken = createAccessToken(user);
   

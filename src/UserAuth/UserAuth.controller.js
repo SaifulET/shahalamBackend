@@ -15,6 +15,21 @@ import {
   deleteAdminService
 } from "./UserAuth.service.js";
 
+const getRefreshCookieOptions = (req) => {
+  const forwardedProto = req.headers["x-forwarded-proto"];
+  const isSecureRequest =
+    req.secure ||
+    forwardedProto === "https" ||
+    process.env.COOKIE_SECURE === "true";
+
+  return {
+    httpOnly: true,
+    secure: isSecureRequest,
+    sameSite: isSecureRequest ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+};
+
 /* SIGNUP */
 export const signup = async (req, res) => {
   try {
@@ -43,12 +58,7 @@ export const login = async (req, res) => {
       role
     );
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("refreshToken", refreshToken, getRefreshCookieOptions(req));
     console.log(user,"user")
     res.json({
       accessToken,
@@ -62,8 +72,8 @@ export const login = async (req, res) => {
         
       },
     });
-  } catch {
-    res.sendStatus(401);
+  } catch (err) {
+    res.status(401).json({ message: err.message || "INVALID_CREDENTIALS" });
   }
 };
 
@@ -76,12 +86,7 @@ export const loginAdmin = async (req, res) => {
       role
     );
 // console.log("dkd",user._id.toString(),"user")
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("refreshToken", refreshToken, getRefreshCookieOptions(req));
 
     res.json({
       accessToken,
@@ -94,8 +99,8 @@ export const loginAdmin = async (req, res) => {
         role: user.role,
       },
     });
-  } catch {
-    res.sendStatus(401);
+  } catch (err) {
+    res.status(401).json({ message: err.message || "INVALID_CREDENTIALS" });
   }
 };
 
@@ -114,12 +119,7 @@ export const loginCompanyController = async (req, res) => {
       role
     );
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("refreshToken", refreshToken, getRefreshCookieOptions(req));
 
     res.json({
       accessToken,
@@ -131,8 +131,8 @@ export const loginCompanyController = async (req, res) => {
         profileImage: user.profileImage,
       },
     });
-  } catch {
-    res.sendStatus(401);
+  } catch (err) {
+    res.status(401).json({ message: err.message || "INVALID_CREDENTIALS" });
   }
 };
 
@@ -163,7 +163,7 @@ export const refresh = async (req, res) => {
 /* LOGOUT */
 export const logout = async (req, res) => {
   await logoutUser(req.cookies.refreshToken);
-  res.clearCookie("refreshToken");
+  res.clearCookie("refreshToken", getRefreshCookieOptions(req));
   res.json({ message: "Logged out" });
 };
 
