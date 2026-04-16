@@ -46,6 +46,16 @@ export const getProjectsByFolderId = async (folderId) => {
   };
 };
 
+export const deleteFolderService = async (folderId) => {
+  if (!mongoose.Types.ObjectId.isValid(folderId)) {
+    const error = new Error("Invalid folderId");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return await Folder.findByIdAndDelete(folderId);
+};
+
 
 
 

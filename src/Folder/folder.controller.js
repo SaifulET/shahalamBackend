@@ -4,7 +4,8 @@ import {
   getFoldersByUserIdService,
   getFolderByIdService,
   getAllFoldersService,
-  getProjectsByFolderId
+  getProjectsByFolderId,
+  deleteFolderService
 } from "./folder.service.js";
 
 // ✅ Create Folder
@@ -83,6 +84,31 @@ export const getFolderProjects = async (req, res) => {
     return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message || "Server error",
+    });
+  }
+};
+
+export const deleteFolder = async (req, res) => {
+  try {
+    const { folderId } = req.params;
+
+    const deletedFolder = await deleteFolderService(folderId);
+
+    if (!deletedFolder) {
+      return res.status(404).json({
+        success: false,
+        message: "Folder not found"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Folder deleted successfully"
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Server error"
     });
   }
 };

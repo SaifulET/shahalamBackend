@@ -5,13 +5,15 @@ import {
   getFoldersByUserId,
   getFolderById,
   getAllFolders,
-  getFolderProjects
+  getFolderProjects,
+  deleteFolder
 } from "./folder.controller.js";
 
 const FolderRouter = express.Router();
 
 FolderRouter.post("/", createFolder); // create folder
 FolderRouter.patch("/:folderId/add-project", addProjectToFolder); // add project
+FolderRouter.delete("/:folderId", deleteFolder); // delete folder
 FolderRouter.get("/", getAllFolders); // ✅ get all
 FolderRouter.get("/:folderId", getFolderById); 
 FolderRouter.get("/user/:userId", getFoldersByUserId);
